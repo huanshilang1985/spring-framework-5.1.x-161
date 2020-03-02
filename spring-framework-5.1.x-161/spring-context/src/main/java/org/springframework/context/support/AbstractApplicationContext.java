@@ -515,6 +515,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			//　准备工作包括设置启动时间，是否激活标识位，初始化属性源（property source）配置
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
@@ -525,9 +526,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				// 这个方法在当前版本的Spring是没有任何代码的，可能Spring期待后面的版本中去扩展
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				// 在Spring的环境中去执行已经被注册的Factory Processors
+				// 设置执行自定义的ProcessBeanFactory和Spring内部自定义的
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
@@ -584,6 +588,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Switch to active.
 		this.startupDate = System.currentTimeMillis();
 		this.closed.set(false);
+		// 保证激活
 		this.active.set(true);
 
 		if (logger.isDebugEnabled()) {
@@ -596,10 +601,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
+		// 空方法，没有实现
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		// 得到系统环境参数
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
@@ -638,17 +645,32 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * 配置其标准的特征，比如上下文的加载器ClassLoader和post-processors回调
+	 * 此处的beanFactory参数等于DefaultListableFactory
+	 *
 	 * Configure the factory's standard context characteristics,
 	 * such as the context's ClassLoader and post-processors.
 	 * @param beanFactory the BeanFactory to configure
 	 */
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
+		/**
+		 * 注册类加载器
+		 */
 		beanFactory.setBeanClassLoader(getClassLoader());
+		/**
+		 * bean表达式解释器，能够获取bean当中的属性在前台页面
+		 */
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+		/**
+		 * 注册属性编辑器，对象与String类型的转换
+		 */
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
+		/**
+		 * 添加一个后置处理器，能够在bean中获得到各种@Aware（*Aware都有其作用）
+		 */
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
@@ -674,6 +696,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			beanFactory.setTempClassLoader(new ContextTypeMatchClassLoader(beanFactory.getBeanClassLoader()));
 		}
 
+		/**
+		 * 意思是如果自定义的Bean中没有名为“systemProperties”和“systemEnvironment”的Bean
+		 * 则注册两个Bean，Key为“systemProperties”和“systemEnvironment”，Value为Map，
+		 * 这两个Bean就是一些系统配置和系统环境信息
+		 */
 		// Register default environment beans.
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
@@ -702,6 +729,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before singleton instantiation.
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+		/**
+		 * 这个地方需要注意getBeanFactoryPostProcessors()是获取自定义的
+		 * 自定义并不仅仅是程序员自己写的，自己写的可以加@Component也可以不加
+		 * 如果加了getBeanFactoryPostProcessor()这个地方得不到，是Spring自己扫描的。为什么得不到getBeanFactoryPostProcessors()这个方法是直接获取一个list
+		 * 这个list是在AnnotationConfigApplication被定义
+		 * 所谓的自定义的就是你手动调用AnnotationConfigApplicationContext.addBeanFactoryPostProcessor()
+		 */
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

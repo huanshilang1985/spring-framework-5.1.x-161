@@ -62,7 +62,8 @@ final class PostProcessorRegistrationDelegate {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
-
+			// 接收用户自定义的beanFactoryProcessors，判断postProcessor的类型是不是子类BeanDefinitionRegistryPostProcessor，是的话存入registryProcessors
+			// 如果不是，说明他是父类BeanFactoryPostProcessor，存入regularPostProcessors
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
@@ -79,20 +80,35 @@ final class PostProcessorRegistrationDelegate {
 			// uninitialized to let the bean factory post-processors apply to them!
 			// Separate between BeanDefinitionRegistryPostProcessors that implement
 			// PriorityOrdered, Ordered, and the rest.
+			// 这个currentRegistryPostProcessor放的是Spring内部自己实现了BeanDefinitionRegistryPostProcessor接口的对象
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			// BeanDefinitionRegistryPostProcessor 等于BeanFactoryPostProcessor
+			// getBeanNamesForType根据bean的类型获取bean的名字
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+			/**
+			 * 这个地方可以得到一个BeanFactoryPostProcessor，因为是Spring默认在最开始自己注册的，为什么要在最开始注册这个呢？
+			 * 因为Spring的工厂需要去解析、去扫描等等功能，而这些功能都是需要在Spring工厂初始化完成之前执行
+			 * 要么在工厂最开始的时候，要么在工厂初始化之中，反正不能再之后。因为如果在之后就没有意义，因为那个时候已经需要使用工厂了。
+			 * 所以这个Spring在一开始就注册了一个BeanFactoryPostProcessor，用来插手SpringFactory的实例化过程
+			 * 在这个地方断点可以知道这个类叫做ConfigurationClassPostProcessor，ConfigurationClassPostProcessor这个类是干嘛的呢？可以参考源码
+			 * 下面我们对这个牛逼哄哄的类（他能插手Spring工厂的实例化过程还不牛逼么？）重点解释
+			 */
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
 					processedBeans.add(ppName);
 				}
 			}
+			// 排序不重要，况且currentRegistryProcessors这里也只有一个数据
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
+			// 合并list，不重要（合并Spring自带的Processor和用户自定义的Processor）
 			registryProcessors.addAll(currentRegistryProcessors);
+			// 最重要，注意这里是方法调用
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+			// 这里list只是一个临时变量，故而要清除
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.

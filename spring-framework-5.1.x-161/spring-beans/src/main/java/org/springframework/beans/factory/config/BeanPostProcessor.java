@@ -20,6 +20,35 @@ import org.springframework.beans.BeansException;
 import org.springframework.lang.Nullable;
 
 /**
+ * BeanPostProcessor是Spring框架提供的一个拓展类点（不止一个，还有其他办法拓展）
+ * 通过实现BeanPostProcessor接口，程序员就可插手bean实例化的过程，从而减轻了beanFactory的负担
+ * 值得说明的是这个借口可以设置多个，会形成一个列表，然后依次执行（但是，Spring默认的怎么办？没有用到注解，需要手动set添加）
+ * 比如AOP就是在bean实例后期间将切面逻辑织入bean实例中的
+ * AOP也正是通过BeanPostProcessor和IOC容器建立起了联系
+ * （由Spring提供的默认的BeanPostProcessor,Spring提供了很多默认的BeanPostProcessor，下面我会一一介绍这些实现类的功能）
+ * 可以来演示一下BeanPostProcessor的使用方式（把动态代理和IOC，AOP结合起来使用）
+ * 在演示之前先来熟悉一下这个接口，其实这个接口本身特别简单，简单到令人发指！
+ * 但是他的实现类特别复杂，同时复杂到令人发指！
+ * 可以看看Spring提供哪些默认的实现（前方高能）
+ * 查看类的关系图可以知道Spring提供了以下的默认实现，因为高能，故而我们只能解释几个常用的。
+ * 1. ApplicationContextAwareProcessor(acap)
+ *    acap后置处理器的作用是，当应用程序定义的Bean实现ApplicationContextAware接口时注入ApplicationContext对象
+ *    当然这是他的第一个作业，还有其他的作用，可以参考源码
+ * 2. InitDestroyAnnotationBeanPostProcessor
+ *    用于处理自定义的初始方法和销毁方法
+ *    上次说过Spring中提供了三种自定义初始化和销毁方法分别是
+ *    (1) 通过@Bean指定init-method和destroy-method属性
+ *    (2) Bean实现InitializingBean接口和实现DisposableBean
+ *    (3) @PostConstruct；@PreDestroy
+ *    为什么Spring通过这三种方法都能完成对bean生命周期的回调呢？
+ *    可以通过InitDestroyAnnotationBeanPostProcessor的源码来解析
+ * 3. InstantiationAwareBeanPostProcessor
+ * 4. CommonAnnotationBeanProcessor
+ * 5. AutowiredAnnotationBeanProcessor
+ * 6. RequiredAnnotationBeanPostProcessor
+ * 7. BeanValidationPostProcessor
+ * 8. AbstractAutoProxyCreator
+ * ......
  * Factory hook that allows for custom modification of new bean instances,
  * e.g. checking for marker interfaces or wrapping them with proxies.
  *
@@ -43,6 +72,7 @@ import org.springframework.lang.Nullable;
 public interface BeanPostProcessor {
 
 	/**
+	 * 在bean初始化之前执行，
 	 * Apply this BeanPostProcessor to the given new bean instance <i>before</i> any bean
 	 * initialization callbacks (like InitializingBean's {@code afterPropertiesSet}
 	 * or a custom init-method). The bean will already be populated with property values.
@@ -61,6 +91,7 @@ public interface BeanPostProcessor {
 	}
 
 	/**
+	 * 在bean初始化之后执行
 	 * Apply this BeanPostProcessor to the given new bean instance <i>after</i> any bean
 	 * initialization callbacks (like InitializingBean's {@code afterPropertiesSet}
 	 * or a custom init-method). The bean will already be populated with property values.

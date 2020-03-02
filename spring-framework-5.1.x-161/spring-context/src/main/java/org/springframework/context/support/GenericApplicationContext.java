@@ -40,6 +40,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * AnnotationConfigApplicationContext的父类
+ *
  * Generic ApplicationContext implementation that holds a single internal
  * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory}
  * instance and does not assume a specific bean definition format. Implements
@@ -77,7 +79,6 @@ import org.springframework.util.Assert;
  * which are easier to set up - but less flexible, since you can just use standard
  * resource locations for XML bean definitions, rather than mixing arbitrary bean
  * definition formats. The equivalent in a web environment is
- * {@link org.springframework.web.context.support.XmlWebApplicationContext}.
  *
  * <p>For custom application context implementations that are supposed to read
  * special bean definition formats in a refreshable manner, consider deriving
@@ -104,6 +105,7 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 
 
 	/**
+	 * 实例化一个工厂DefaultListableBeanFactory
 	 * Create a new GenericApplicationContext.
 	 * @see #registerBeanDefinition
 	 * @see #refresh

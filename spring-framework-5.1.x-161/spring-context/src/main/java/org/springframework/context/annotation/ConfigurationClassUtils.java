@@ -90,11 +90,13 @@ abstract class ConfigurationClassUtils {
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
+			// 如果BeanDefinition是AnnotatedBeanDefinition的实例，并且className和BeanDefinition中的元数据的类名相同，则直接从BeanDefinition获得Metadata
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
+			// 如果BeanDefinition是AbstractBeanDefinition的实例，并且beanDef有beanClass属性存在
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
 			metadata = new StandardAnnotationMetadata(beanClass, true);
 		}
@@ -111,8 +113,9 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 		}
-
+		// 判断当前这个bd中存在的类是不是加了@Configuation注解
 		if (isFullConfigurationCandidate(metadata)) {
+			// 如果存在Configuration注解，则为BeanDefinition设置ConfigurationClass属性为full
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
 		else if (isLiteConfigurationCandidate(metadata)) {
